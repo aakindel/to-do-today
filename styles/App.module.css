@@ -1,0 +1,11 @@
+/* give each Paragraph block a gray placeholder */
+.pg_block[contenteditable]:empty:before { 
+  content: attr(placeholder);
+  color: gray;
+  opacity: 0.3;
+}
+
+/* remove blue focus outline around Paragraph block */
+.pg_block[contenteditable]:focus {
+  outline: none;
+}
