@@ -9,3 +9,7 @@
 .pg_block[contenteditable]:focus {
   outline: none;
 }
+
+.pg_block {
+  white-space: pre-wrap;
+}
