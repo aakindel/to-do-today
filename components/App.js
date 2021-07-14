@@ -31,6 +31,39 @@ export default function App() {
     console.log('lines: '+ JSON.stringify(lines));
   }
 
+  const _setCaretPositionInLine = (line, position) => {
+    /* sets caret at position in line (TextNode) 
+       or at start/end of line (with other Node types) */
+    
+    const lineLength = line.length;
+    
+    // if line is not a TextNode
+    if ((line.nodeType !== 3)) {
+      console.log(`${line.nodeValue} is not a TextNode!`);
+      position = 0;
+    }
+    
+    // get range & selection for manipulating caret position
+    let range = document.createRange();
+    let selection = window.getSelection();
+
+    // remove all ranges from the selection
+    selection.removeAllRanges();
+
+    // set start position of range in line
+    if (position > lineLength) {
+      range.setStart(line, lineLength);
+    } else {
+      range.setStart(line, position);
+    }
+    
+    // place caret as a single point at range start
+    range.collapse(true);
+
+    // move the caret to position that the range specifies
+    selection.addRange(range);
+  }
+  
   const updateLineInDom = (e) => {
 
     /* GET CARET POSITION & CURRENT LINE ATTRIBUTES
@@ -47,6 +80,10 @@ export default function App() {
     // get current line id & current line index (position) in lines array
     const currentLineId = currentLine.attributes.getNamedItem("id").value;
     const currentLineIndex = lines.findIndex(x => x.id === currentLineId);
+
+    // get current/previous/next TextLines' container divs
+    const currParaDiv = document.getElementById(currentLineId).parentNode;
+    const prevParaDiv = currParaDiv.previousSibling;
 
     
     /* HELPER FUNCTIONS for HANDLING ENTER KEYDOWN
@@ -83,7 +120,7 @@ export default function App() {
       const div = document.createElement('div');
 
       // get current Paragraph's container div
-      const currTLDiv = document.getElementById(currentLineId).parentNode;
+      const currParaDiv = document.getElementById(currentLineId).parentNode;
       
       /* ~ insert new Paragraph (container) 
          above/below current Paragraph (container) in DOM */
@@ -94,8 +131,8 @@ export default function App() {
           updateLineInLines={updateLineInLines} 
           updateLineInDom={updateLineInDom} /> </>,
           (insertNewLineAbove) ? 
-            currTLDiv.parentNode.insertBefore(div, currTLDiv) : 
-            currTLDiv.parentNode.insertBefore(div, currTLDiv.nextSibling)
+            currParaDiv.parentNode.insertBefore(div, currParaDiv) : 
+            currParaDiv.parentNode.insertBefore(div, currParaDiv.nextSibling)
       );
 
       // if new Paragraph container is inserted below current Paragraph container
@@ -135,7 +172,7 @@ export default function App() {
       const div = document.createElement('div');
 
       // get current Paragraph's container div
-      const currTLDiv = document.getElementById(currentLineId).parentNode;
+      const currParaDiv = document.getElementById(currentLineId).parentNode;
       
       /* ~ set current Paragraph's text in DOM to 1st half of split text
          (using setText from useState within Paragraph to update
@@ -150,7 +187,7 @@ export default function App() {
           text={newLineText} 
           updateLineInLines={updateLineInLines} 
           updateLineInDom={updateLineInDom} />,
-        currTLDiv.parentNode.insertBefore(div, currTLDiv.nextSibling)
+        currParaDiv.parentNode.insertBefore(div, currParaDiv.nextSibling)
       );
       
       // ~ focus on new Paragraph in DOM
@@ -205,6 +242,69 @@ export default function App() {
 
       console.log('lines: ' + JSON.stringify(lines));
 
+    }
+
+
+    /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES BACKSPACE
+     ======================================================================= */
+
+    /**
+     * Cases to handle when a user presses BACKSPACE
+     *
+     * C1. BACKSPACE on a non-1st-Paragraph empty line 
+     *   ~ remove current line from Lines array
+     *   ~ remove current Paragraph from DOM
+     *   ~ put caret at end of Paragraph above removed Paragraph in DOM
+     * C2. BACKSPACE at start of a non-1st-Paragraph line with text 
+     *   ~ append current line text to line before it in Lines array
+     *   ~ remove current line from Lines array
+     *   ~ remove current Paragraph from DOM
+     *   ~ append removed Paragraph's text to Paragraph above it in DOM
+     *   ~ put caret at join point in Paragraph above removed Paragraph
+     */
+
+     if (e.key === 'Backspace') {
+
+      // if current line is not the first line & caret is at line start
+      if ((prevParaDiv !== null) && (caretPositionInLine === 0)) {
+
+        e.preventDefault();
+
+        // get previous line
+        const prevLine = prevParaDiv.childNodes[0];
+        
+        if (prevLine !== undefined) {
+
+          // get previous line text (div -> Paragraph -> text) and length
+          const prevLineText = prevLine.innerText;
+          const prevLineLength = prevLineText.length;
+          
+          // get previous line text node (for setting caret position)
+          const prevLineTextNode = (prevLine.childNodes[0] === undefined) ? 
+            prevLine : prevLine.childNodes[0];
+          
+          if (currentLineLength === 0) {
+            // C1: BACKSPACE on a non-1st-Paragraph empty line
+
+            // ~ remove current line from Lines array
+            lines.splice(currentLineIndex, 1);
+
+            // ~ remove current Paragraph from DOM
+            currParaDiv.parentNode.removeChild(currParaDiv);
+
+            // ~ put caret at end of Paragraph above removed Paragraph in DOM
+            _setCaretPositionInLine(prevLineTextNode, prevLineLength);
+
+          } else {
+            // C2: BACKSPACE at start of a non-1st-Paragraph line with text
+            ;
+
+          }
+
+          console.log('lines: ' + JSON.stringify(lines));
+        }
+
+      }
     }
 
   }
