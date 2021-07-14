@@ -81,7 +81,7 @@ export default function App() {
     const currentLineId = currentLine.attributes.getNamedItem("id").value;
     const currentLineIndex = lines.findIndex(x => x.id === currentLineId);
 
-    // get current/previous/next TextLines' container divs
+    // get current/previous/next Paragraphs' container divs
     const currParaDiv = document.getElementById(currentLineId).parentNode;
     const prevParaDiv = currParaDiv.previousSibling;
 
@@ -282,6 +282,10 @@ export default function App() {
           // get previous line text node (for setting caret position)
           const prevLineTextNode = (prevLine.childNodes[0] === undefined) ? 
             prevLine : prevLine.childNodes[0];
+
+          // get previous line id & previous line index (position) in lines array
+          const prevLineId = prevLine.attributes.getNamedItem("id").value;
+          const prevLineIndex = lines.findIndex(x => x.id === prevLineId);
           
           if (currentLineLength === 0) {
             // C1: BACKSPACE on a non-1st-Paragraph empty line
@@ -297,7 +301,24 @@ export default function App() {
 
           } else {
             // C2: BACKSPACE at start of a non-1st-Paragraph line with text
-            ;
+
+            // ~ append current line text to line before it in Lines array
+            const newPrevLineText = prevLineText + currentLineText;
+            lines[prevLineIndex].text = newPrevLineText;
+            
+            // ~ remove current line from Lines array
+            lines.splice(currentLineIndex, 1);
+
+            // ~ remove current Paragraph from DOM
+            currParaDiv.parentNode.removeChild(currParaDiv);
+
+            // ~ append removed Paragraph's text to Paragraph above it in DOM
+            ReactDom.render(newPrevLineText, prevLine, () => {
+              /* ~ put caret at join point in Paragraph above removed Paragraph 
+                   (since prevLineLength != newPrevLineText length) */
+              // can't use prevLineTextNode to access text node because of re-render
+              _setCaretPositionInLine(document.getElementById(prevLineId).childNodes[0], prevLineLength)
+            });
 
           }
 
