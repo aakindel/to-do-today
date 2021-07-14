@@ -105,6 +105,59 @@ export default function App() {
       }
 
     }
+
+    const _splitLineAtCaret = (currentLineId, currentLineIndex) => {
+      /* splits current line at caret; sets halves of split text 
+         to current line and new line in Lines array respectively; 
+         sets halves of split text to current Paragraph's text 
+         and new Paragraph's text in DOM respectively */
+      
+      // set new line id
+      const newLineId = uuidv4();
+
+      // set new line index after current line index in Lines array
+      const newLineIndex = currentLineIndex + 1;
+
+      /* ~ split current line text at caret 
+         (into newCurrentLineText & newLineText) */
+      const newCurrentLineText = currentLineText.substring(0, 
+          caretPositionInLine);
+      const newLineText = currentLineText.substring(caretPositionInLine);
+
+      // ~ set current line text in Lines array to 1st half of split text
+      lines[currentLineIndex].text = newCurrentLineText;
+      
+      /* insert new line after current line in Lines array and 
+         ~ set new line text in Lines array to 2nd half of split text */
+      lines.splice(newLineIndex, 0, {id: newLineId, text: newLineText});
+
+      // create container div to contain new Paragraph
+      const div = document.createElement('div');
+
+      // get current Paragraph's container div
+      const currTLDiv = document.getElementById(currentLineId).parentNode;
+      
+      /* ~ set current Paragraph's text in DOM to 1st half of split text
+         (using setText from useState within Paragraph to update
+         the current line's text property doesn't ALWAYS work) */
+      ReactDom.render(newCurrentLineText, currentLine);
+
+      /* insert new Paragraph (container) below 
+         current Paragraph (container) in DOM and
+         ~ set new Paragraph's text in DOM to 2nd half of split text */
+      ReactDom.render(
+        <Paragraph key={newLineId} id={newLineId} 
+          text={newLineText} 
+          updateLineInLines={updateLineInLines} 
+          updateLineInDom={updateLineInDom} />,
+        currTLDiv.parentNode.insertBefore(div, currTLDiv.nextSibling)
+      );
+      
+      // ~ focus on new Paragraph in DOM
+      div.children[0].focus();
+
+    }
+
     
     /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES ENTER
      ======================================================================= */
@@ -147,7 +200,7 @@ export default function App() {
 
       } else { 
         // C4: ENTER in the middle of a line with text
-        ;
+        _splitLineAtCaret(currentLineId, currentLineIndex);
       }
 
       console.log('lines: ' + JSON.stringify(lines));
