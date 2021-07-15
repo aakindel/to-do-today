@@ -177,12 +177,7 @@ export default function App() {
       /* ~ set current Paragraph's text in DOM to 1st half of split text
          (using setText from useState within Paragraph to update
          the current line's text property doesn't ALWAYS work) */
-      ReactDom.render(newCurrentLineText, currentLine, () => {
-        if (currentLine.innerText !== newCurrentLineText) {
-          ReactDom.unmountComponentAtNode(currentLine); 
-          ReactDom.render(new String(newCurrentLineText), currentLine)
-        }
-      });
+      ReactDom.render(new String(newCurrentLineText), currentLine);
 
       /* insert new Paragraph (container) below 
          current Paragraph (container) in DOM and
