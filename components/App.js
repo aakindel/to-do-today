@@ -23,6 +23,24 @@ function Paragraph({id, text, updateLineInLines, updateLineInDom}) {
   );
 }
 
+function Todo({id, text, updateLineInLines, updateLineInDom}) {
+  let [isChecked, setIsChecked] = useState(false);
+
+  const handleIsChecked = (isChecked) => {
+    setIsChecked(isChecked);
+  }
+
+  return (
+    <>
+      <Checkbox isChecked={isChecked} handleIsChecked={handleIsChecked} />
+      <Paragraph key={id} id={id} isChecked={isChecked}
+        text={text} 
+        updateLineInLines={updateLineInLines} 
+        updateLineInDom={updateLineInDom} />
+    </>
+  );
+}
+
 export default function App() {
   // initialize Lines array with an empty line object
   const lines = [{id: uuidv4(), text: ""}];
@@ -510,15 +528,11 @@ export default function App() {
 
   }
 
-  let [isChecked, setIsChecked] = useState(false);
-
-  const handleIsChecked = (isChecked) => {
-    setIsChecked(isChecked);
-  }
 
   return (
     <>
-      <Checkbox isChecked={isChecked} handleIsChecked={handleIsChecked} />
+      <Todo id={"testId"} text={"testText"} updateLineInLines={updateLineInLines} 
+        updateLineInDom={updateLineInDom} />
       {
         lines.map((line) => {
           return (
