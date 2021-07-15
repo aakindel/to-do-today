@@ -19,6 +19,10 @@ export default function App() {
   // initialize Lines array with an empty line object
   const lines = [{id: uuidv4(), text: ""}];
 
+  /* initialize prevCaretPosInLine, which 
+     keeps track of where the caret has been */
+  let prevCaretPosInLine = 0;
+
   const updateLineInLines = () => {
     // get currentLineText & currentLineIndex
     const currentLine = document.activeElement;
@@ -325,6 +329,47 @@ export default function App() {
 
       }
     }
+
+    /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES UP ARROW KEY
+     ======================================================================= */
+
+    /**
+     * Cases to handle when a user presses UP ARROW KEY
+     *
+     * C1. UP ARROW KEY on non-1st-Paragraph line
+     *   ~ put caret at proper position in Paragraph above current Paragraph
+     *   ~ retain caretPosition value even if line above has less text
+     */
+
+    // if current line is not the first line
+    if ((e.key === 'ArrowUp') && (prevParaDiv !== null)) {
+      
+      // get previous line, line text (div -> Paragraph -> text) and length
+      const prevLine = prevParaDiv.childNodes[0];
+      
+      if (prevLine !== undefined) {
+        // if prevLine is undefined, default will put caret at line start
+        e.preventDefault();
+
+        // get previous line text node (for setting caret position)
+        const prevLineTextNode = (prevLine.childNodes[0] === undefined) ? 
+          prevLine : prevLine.childNodes[0];
+        
+        /* ~ retain caretPosition value even if line above has less text (so
+            if you're on a line with 4 chars, & you press UP to a line with 2
+            chars & UP again to a line with 5 chars, your caret position on 
+            the topmost line will be at 4 chars instead of at 2) */
+        prevCaretPosInLine = (prevCaretPosInLine > caretPositionInLine) ?
+          prevCaretPosInLine : caretPositionInLine;
+
+        // ~ put caret at proper position in Paragraph above current Paragraph
+        _setCaretPositionInLine(prevLineTextNode, prevCaretPosInLine);
+      } else {
+        // set prevCaretPosInLine to line start if prevLine is undefined
+        prevCaretPosInLine = 0;
+      }
+      
+   }
 
   }
 
