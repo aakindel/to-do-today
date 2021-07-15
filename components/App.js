@@ -331,6 +331,41 @@ export default function App() {
       }
     }
 
+
+    /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES LEFT ARROW KEY
+     ======================================================================= */
+
+    /**
+     * Cases to handle when a user presses LEFT ARROW KEY
+     *
+     * C1. LEFT ARROW KEY at start of a non-1st-Paragraph line
+     *   ~ put caret at end of Paragraph above current Paragraph in DOM
+     */
+
+    // if current line is not the first line & caret is at line start 
+    if ((e.key === 'ArrowLeft') && (prevParaDiv !== null) 
+      && (caretPositionInLine === 0)) {
+      
+      e.preventDefault();
+      
+      // get previous line, line text (div -> Paragraph -> text) and length
+      const prevLine = prevParaDiv.childNodes[0];
+      
+      if (prevLine !== undefined) {
+        const prevLineText = prevLine.innerText;
+        const prevLineLength = prevLineText.length;
+        
+        // get previous line text node (for setting caret position)
+        const prevLineTextNode = (prevLine.childNodes[0] === undefined) ? 
+          prevLine : prevLine.childNodes[0];
+
+        // ~ put caret at end of Paragraph above current Paragraph in DOM
+        _setCaretPositionInLine(prevLineTextNode, prevLineLength);
+      }
+      
+    }
+
+
     /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES UP ARROW KEY
      ======================================================================= */
 
@@ -371,6 +406,7 @@ export default function App() {
       }
       
    }
+
 
    /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES DOWN ARROW KEY
      ======================================================================= */
