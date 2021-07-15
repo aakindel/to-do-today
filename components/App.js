@@ -1,7 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import ReactDom from 'react-dom';
 import styles from '../styles/App.module.css'
+
+function Checkbox({isChecked, handleIsChecked}) {
+  return (
+    <div className={`${styles.checkbox} ${(isChecked ? styles.checked : "")}`} 
+      onClick={() => {handleIsChecked(!isChecked)}} />
+  );
+}
 
 function Paragraph({id, text, updateLineInLines, updateLineInDom}) {
   return (
@@ -201,7 +208,6 @@ export default function App() {
         if (currentLine.innerText !== newCurrentLineText) {
           currentLine.removeChild(currentLine.childNodes[0]); 
           currentLine.appendChild(document.createTextNode(new String(newCurrentLineText)))
-          console.log(newCurrentLineText)
         }
       });
       
@@ -346,7 +352,6 @@ export default function App() {
               if (prevLine.innerText !== newPrevLineText) {
                 prevLine.removeChild(prevLine.childNodes[0]); 
                 prevLine.appendChild(document.createTextNode(new String(newPrevLineText)))
-                console.log(newPrevLineText)
               }
               _setCaretPositionInLine(document.getElementById(prevLineId).childNodes[0], prevLineLength)
             });
@@ -505,15 +510,26 @@ export default function App() {
 
   }
 
+  let [isChecked, setIsChecked] = useState(false);
+
+  const handleIsChecked = (isChecked) => {
+    setIsChecked(isChecked);
+  }
+
   return (
-    lines.map((line) => {
-      return (
-        <div key={line.id}>
-          <Paragraph id={line.id} text={line.text} 
-            updateLineInLines={updateLineInLines} 
-            updateLineInDom={updateLineInDom} />
-        </div>
-      );
-    })
+    <>
+      <Checkbox isChecked={isChecked} handleIsChecked={handleIsChecked} />
+      {
+        lines.map((line) => {
+          return (
+            <div key={line.id}>
+              <Paragraph id={line.id} text={line.text} 
+                updateLineInLines={updateLineInLines} 
+                updateLineInDom={updateLineInDom} />
+            </div>
+          );
+        })
+      }
+    </>
   );
 }

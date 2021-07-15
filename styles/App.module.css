@@ -13,3 +13,36 @@
 .pg_block {
   white-space: pre-wrap;
 }
+
+.checkbox {
+  background-color: white;
+  position: relative;
+  border: 2px solid #7a7a7a;
+  margin-right: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  width: 15px;
+  height: 15px;
+}
+
+.checkbox.checked {
+  background-color: rgb(41, 188, 247);
+  border-color: rgb(41, 188, 247);
+}
+
+.checkbox.checked:after {
+  content: '';
+  position: absolute;
+  display: block;
+  width: 60%;
+  height: 30%;
+  margin: -2px 0 0 1px;
+  background: transparent;
+  border: 2px solid white;
+  border-top: none;
+  border-right: none;
+  -webkit-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+}
