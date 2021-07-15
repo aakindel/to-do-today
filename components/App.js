@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import ReactDom from 'react-dom';
 import styles from '../styles/App.module.css'
 
-function Checkbox({isChecked, handleIsChecked}) {
+function Checkbox({paragraphId, isChecked, handleIsChecked}) {
   return (
     <div className={`${styles.checkbox} ${(isChecked ? styles.checked : "")}`} 
-      onClick={() => {handleIsChecked(!isChecked)}} />
+      onClick={() => {handleIsChecked(paragraphId, !isChecked)}} />
   );
 }
 
@@ -26,13 +26,14 @@ function Paragraph({id, text, updateLineInLines, updateLineInDom}) {
 function Todo({id, text, updateLineInLines, updateLineInDom}) {
   let [isChecked, setIsChecked] = useState(false);
 
-  const handleIsChecked = (isChecked) => {
+  const handleIsChecked = (paragraphId, isChecked) => {
     setIsChecked(isChecked);
+    updateLineInLines(paragraphId, isChecked);
   }
 
   return (
     <>
-      <Checkbox isChecked={isChecked} handleIsChecked={handleIsChecked} />
+      <Checkbox paragraphId={id} isChecked={isChecked} handleIsChecked={handleIsChecked} />
       <Paragraph key={id} id={id} isChecked={isChecked}
         text={text} 
         updateLineInLines={updateLineInLines} 
@@ -65,15 +66,22 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const updateLineInLines = () => {
-    // get currentLineText & currentLineIndex
-    const currentLine = document.activeElement;
-    const currentLineText = currentLine.innerText;
-    const currentLineId = currentLine.attributes.getNamedItem("id").value;
-    const currentLineIndex = lines.findIndex(x => x.id === currentLineId);
+  const updateLineInLines = (paragraphId=null, isChecked=null) => {
+    if ((paragraphId !== null) && 
+      ((isChecked === true) || (isChecked === false))) {
+      
+      // if updateLineInLines is invoked from a Checkbox
 
-    // update current line text in Lines array with currentLineText from DOM
-    lines[currentLineIndex].text = currentLineText;
+    } else {
+      // get currentLineText & currentLineIndex
+      const currentLine = document.activeElement;
+      const currentLineText = currentLine.innerText;
+      const currentLineId = currentLine.attributes.getNamedItem("id").value;
+      const currentLineIndex = lines.findIndex(x => x.id === currentLineId);
+
+      // update current line text in Lines array with currentLineText from DOM
+      lines[currentLineIndex].properties.text = currentLineText;
+    }
     console.log('lines: '+ JSON.stringify(lines));
   }
 
