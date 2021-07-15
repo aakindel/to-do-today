@@ -366,6 +366,35 @@ export default function App() {
     }
 
 
+    /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES RIGHT ARROW KEY
+     ======================================================================= */
+
+    /**
+     * Cases to handle when a user presses RIGHT ARROW KEY
+     *
+     * C1. RIGHT ARROW KEY at end of a non-last-line line
+     *   ~ put caret at start of Paragraph below current Paragraph in DOM
+     */
+
+    // if current line is not the first line & caret is at line start 
+    if ((e.key === 'ArrowRight') && (nextParaDiv !== null) 
+      && (caretPositionInLine === currentLineLength)) {
+      
+      e.preventDefault();
+      
+      // get next line, line text (div -> Paragraph -> text) and length
+      const nextLine = nextParaDiv.childNodes[0];
+      
+      // get next line text node (for setting caret position)
+      const nextLineTextNode = (nextLine.childNodes[0] === undefined) ? 
+        nextLine : nextLine.childNodes[0];
+
+      // ~ put caret at start of Paragraph below current Paragraph in DOM
+      _setCaretPositionInLine(nextLineTextNode, 0);
+
+     }
+
+
     /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES UP ARROW KEY
      ======================================================================= */
 
