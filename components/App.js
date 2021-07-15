@@ -197,8 +197,14 @@ export default function App() {
       const currParaDiv = document.getElementById(currentLineId).parentNode;
       
       /* ~ set current Paragraph's text in DOM to 1st half of split text */
-      ReactDom.render(document.createTextNode(newCurrentLineText).nodeValue, currentLine);
-
+      ReactDom.render(newCurrentLineText, currentLine, () => {
+        if (currentLine.innerText !== newCurrentLineText) {
+          currentLine.removeChild(currentLine.childNodes[0]); 
+          currentLine.appendChild(document.createTextNode(new String(newCurrentLineText)))
+          console.log(newCurrentLineText)
+        }
+      });
+      
       /* insert new Paragraph (container) below 
          current Paragraph (container) in DOM and
          ~ set new Paragraph's text in DOM to 2nd half of split text */
@@ -337,6 +343,11 @@ export default function App() {
               /* ~ put caret at join point in Paragraph above removed Paragraph 
                    (since prevLineLength != newPrevLineText length) */
               // can't use prevLineTextNode to access text node because of re-render
+              if (prevLine.innerText !== newPrevLineText) {
+                prevLine.removeChild(prevLine.childNodes[0]); 
+                prevLine.appendChild(document.createTextNode(new String(newPrevLineText)))
+                console.log(newPrevLineText)
+              }
               _setCaretPositionInLine(document.getElementById(prevLineId).childNodes[0], prevLineLength)
             });
 
