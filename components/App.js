@@ -174,10 +174,8 @@ export default function App() {
       // get current Paragraph's container div
       const currParaDiv = document.getElementById(currentLineId).parentNode;
       
-      /* ~ set current Paragraph's text in DOM to 1st half of split text
-         (using setText from useState within Paragraph to update
-         the current line's text property doesn't ALWAYS work) */
-      ReactDom.render(new String(newCurrentLineText), currentLine);
+      /* ~ set current Paragraph's text in DOM to 1st half of split text */
+      ReactDom.render(document.createTextNode(newCurrentLineText).nodeValue, currentLine);
 
       /* insert new Paragraph (container) below 
          current Paragraph (container) in DOM and
