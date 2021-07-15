@@ -88,6 +88,7 @@ export default function App() {
     // get current/previous/next Paragraphs' container divs
     const currParaDiv = document.getElementById(currentLineId).parentNode;
     const prevParaDiv = currParaDiv.previousSibling;
+    const nextParaDiv = currParaDiv.nextSibling;
 
     
     /* HELPER FUNCTIONS for HANDLING ENTER KEYDOWN
@@ -369,6 +370,37 @@ export default function App() {
         prevCaretPosInLine = 0;
       }
       
+   }
+
+   /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES DOWN ARROW KEY
+     ======================================================================= */
+
+    /**
+     * Cases to handle when a user presses DOWN ARROW KEY
+     *
+     * C1. DOWN ARROW KEY on non-last-line line
+     *   ~ put caret at proper position in Paragraph below current Paragraph
+     *   ~ retain caretPosition value even if line below has less text
+     */
+
+    // if current line is not the last line
+    if ((e.key === 'ArrowDown') && (nextParaDiv !== null)) {
+    
+      e.preventDefault();
+     
+      // get next line, line text (div -> Paragraph -> text) and length
+      const nextLine = nextParaDiv.childNodes[0];
+     
+      // get next line text node (for setting caret position)
+      const nextLineTextNode = (nextLine.childNodes[0] === undefined) ? 
+        nextLine : nextLine.childNodes[0];
+      
+      /* ~ retain caretPosition value even if line below has less text */
+      prevCaretPosInLine = (prevCaretPosInLine > caretPositionInLine) ?
+        prevCaretPosInLine : caretPositionInLine;
+
+      // ~ put caret at proper position in Paragraph below current Paragraph
+      _setCaretPositionInLine(nextLineTextNode, prevCaretPosInLine);
    }
 
   }
