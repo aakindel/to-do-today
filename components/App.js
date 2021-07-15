@@ -81,8 +81,11 @@ export default function App() {
   const updateLineInLines = (paragraphId=null, isChecked=null) => {
     if ((paragraphId !== null) && 
       ((isChecked === true) || (isChecked === false))) {
-      
       // if updateLineInLines is invoked from a Checkbox
+      
+      // (un)check the paragraph with the passed in paragraphId
+      const lineIndex = lines.findIndex(x => x.id === paragraphId);
+      lines[lineIndex].properties.isChecked = isChecked;
 
     } else {
       // get currentLineText & currentLineIndex
@@ -557,7 +560,7 @@ export default function App() {
         lines.map((line) => {
           return (
             <div key={line.id}>
-              <Paragraph id={line.id} text={line.text} 
+              <ToDo id={line.id} text={line.text} 
                 updateLineInLines={updateLineInLines} 
                 updateLineInDom={updateLineInDom} />
             </div>
