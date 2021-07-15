@@ -46,3 +46,10 @@
   -webkit-transform: rotate(-45deg);
   transform: rotate(-45deg);
 }
+
+.to_do_div {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  font-size: 18px;
+}

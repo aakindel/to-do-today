@@ -54,6 +54,16 @@ function ToDo({id, text, updateLineInLines, updateLineInDom}) {
   );
 }
 
+function ToDoList({lines, updateLineInLines, updateLineInDom}) {
+  return (
+    lines.map((line) => {
+      return <div key={line.id} className={styles.to_do_div}><ToDo id={line.id}
+        text={line.text} updateLineInLines={updateLineInLines} 
+        updateLineInDom={updateLineInDom} /></div>
+    })
+  );
+}
+
 export default function App() {
   // initialize Lines array with an empty line object
   const lines = [makeToDoObject(uuidv4(), "", false)];
@@ -554,19 +564,9 @@ export default function App() {
 
   return (
     <>
-      <ToDo id={"testId"} text={"testText"} updateLineInLines={updateLineInLines} 
+      <ToDoList lines={lines} 
+        updateLineInLines={updateLineInLines} 
         updateLineInDom={updateLineInDom} />
-      {
-        lines.map((line) => {
-          return (
-            <div key={line.id}>
-              <ToDo id={line.id} text={line.text} 
-                updateLineInLines={updateLineInLines} 
-                updateLineInDom={updateLineInDom} />
-            </div>
-          );
-        })
-      }
     </>
   );
 }
