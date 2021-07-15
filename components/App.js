@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { useEffect } from 'react';
 import ReactDom from 'react-dom';
 import styles from '../styles/App.module.css'
 
@@ -22,6 +23,22 @@ export default function App() {
   /* initialize prevCaretPosInLine, which 
      keeps track of where the caret has been */
   let prevCaretPosInLine = 0;
+
+  const resetPrevCaretPosInLine = () => {
+    // sets prevCaretPosInLine to proper position in line
+    prevCaretPosInLine = document.getSelection().baseOffset - 1;
+  }
+
+  useEffect(() => {
+    // set prevCaretPosInLine to caretPositionInLine on click
+    document.body.addEventListener('click', resetPrevCaretPosInLine);
+
+    // clean up the click listener after this effect
+    return () => window.removeEventListener("click", resetPrevCaretPosInLine);
+
+    // line below fixes useEffect missing dependency warning:
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const updateLineInLines = () => {
     // get currentLineText & currentLineIndex
@@ -361,6 +378,7 @@ export default function App() {
 
         // ~ put caret at end of Paragraph above current Paragraph in DOM
         _setCaretPositionInLine(prevLineTextNode, prevLineLength);
+
       }
       
     }
@@ -392,7 +410,12 @@ export default function App() {
       // ~ put caret at start of Paragraph below current Paragraph in DOM
       _setCaretPositionInLine(nextLineTextNode, 0);
 
-     }
+    }
+
+    if ((e.key !== 'ArrowUp') && (e.key !== 'ArrowDown')) {
+      // set prevCaretPosInLine to caretPositionInLine on non-arrow-key press
+      resetPrevCaretPosInLine();
+    }
 
 
     /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES UP ARROW KEY
@@ -434,7 +457,7 @@ export default function App() {
         prevCaretPosInLine = 0;
       }
       
-   }
+    }
 
 
    /* CASES TO HANDLE (preventDefault) WHEN A USER PRESSES DOWN ARROW KEY
@@ -466,7 +489,8 @@ export default function App() {
 
       // ~ put caret at proper position in Paragraph below current Paragraph
       _setCaretPositionInLine(nextLineTextNode, prevCaretPosInLine);
-   }
+
+    }
 
   }
 
