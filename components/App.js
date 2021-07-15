@@ -198,6 +198,7 @@ export default function App() {
 
       // create container div to contain new Paragraph
       const div = document.createElement('div');
+      div.classList.add(styles.to_do_div);
 
       // get current Paragraph's container div
       const currParaDiv = document.getElementById(currentLineId).parentNode;
@@ -206,7 +207,7 @@ export default function App() {
          above/below current Paragraph (container) in DOM */
       ReactDom.render(
         <>
-        <Paragraph key={newLineId} id={newLineId} 
+        <ToDo key={newLineId} id={newLineId} 
           text={newLineText} 
           updateLineInLines={updateLineInLines} 
           updateLineInDom={updateLineInDom} /> </>,
@@ -250,6 +251,7 @@ export default function App() {
 
       // create container div to contain new Paragraph
       const div = document.createElement('div');
+      div.classList.add(styles.to_do_div);
 
       // get current Paragraph's container div
       const currParaDiv = document.getElementById(currentLineId).parentNode;
@@ -266,7 +268,7 @@ export default function App() {
          current Paragraph (container) in DOM and
          ~ set new Paragraph's text in DOM to 2nd half of split text */
       ReactDom.render(
-        <Paragraph key={newLineId} id={newLineId} 
+        <ToDo key={newLineId} id={newLineId} 
           text={newLineText} 
           updateLineInLines={updateLineInLines} 
           updateLineInDom={updateLineInDom} />,
