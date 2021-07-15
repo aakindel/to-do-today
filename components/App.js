@@ -23,7 +23,19 @@ function Paragraph({id, text, updateLineInLines, updateLineInDom}) {
   );
 }
 
-function Todo({id, text, updateLineInLines, updateLineInDom}) {
+function makeToDoObject(id, text, isChecked) {
+  return {
+    "objectType": "block", 
+    "id": id, 
+    "type": "text_line",
+    "properties": {
+      "text": text,
+      "isChecked": isChecked
+    }
+  }
+}
+
+function ToDo({id, text, updateLineInLines, updateLineInDom}) {
   let [isChecked, setIsChecked] = useState(false);
 
   const handleIsChecked = (paragraphId, isChecked) => {
@@ -44,7 +56,7 @@ function Todo({id, text, updateLineInLines, updateLineInDom}) {
 
 export default function App() {
   // initialize Lines array with an empty line object
-  const lines = [{id: uuidv4(), text: ""}];
+  const lines = [makeToDoObject(uuidv4(), "", false)];
 
   /* initialize prevCaretPosInLine, which 
      keeps track of where the caret has been */
@@ -169,7 +181,7 @@ export default function App() {
         currentLineIndex : currentLineIndex + 1;
 
       // ~ insert new line before/after current line in Lines array
-      lines.splice(newLineIndex, 0, {id: newLineId, text: ""});
+      lines.splice(newLineIndex, 0, makeToDoObject(newLineId, newLineText, false));
 
       // create container div to contain new Paragraph
       const div = document.createElement('div');
@@ -217,11 +229,11 @@ export default function App() {
       const newLineText = currentLineText.substring(caretPositionInLine);
 
       // ~ set current line text in Lines array to 1st half of split text
-      lines[currentLineIndex].text = newCurrentLineText;
+      lines[currentLineIndex].properties.text = newCurrentLineText;
       
       /* insert new line after current line in Lines array and 
          ~ set new line text in Lines array to 2nd half of split text */
-      lines.splice(newLineIndex, 0, {id: newLineId, text: newLineText});
+      lines.splice(newLineIndex, 0, makeToDoObject(newLineId, newLineText, false));
 
       // create container div to contain new Paragraph
       const div = document.createElement('div');
@@ -362,7 +374,7 @@ export default function App() {
 
             // ~ append current line text to line before it in Lines array
             const newPrevLineText = prevLineText + currentLineText;
-            lines[prevLineIndex].text = newPrevLineText;
+            lines[prevLineIndex].properties.text = newPrevLineText;
             
             // ~ remove current line from Lines array
             lines.splice(currentLineIndex, 1);
@@ -539,7 +551,7 @@ export default function App() {
 
   return (
     <>
-      <Todo id={"testId"} text={"testText"} updateLineInLines={updateLineInLines} 
+      <ToDo id={"testId"} text={"testText"} updateLineInLines={updateLineInLines} 
         updateLineInDom={updateLineInDom} />
       {
         lines.map((line) => {
