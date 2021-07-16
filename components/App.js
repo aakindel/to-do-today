@@ -574,7 +574,7 @@ export default function App() {
     <div className="container">
       <div contentEditable="true" className={styles.page_title} 
         suppressContentEditableWarning={true}
-        placeholder="Untitled">Today's To-Dos</div>
+        placeholder="Untitled">Today\'s To-Dos</div>
       <ToDoList lines={lines} 
         updateLineInLines={updateLineInLines} 
         updateLineInDom={updateLineInDom} />
