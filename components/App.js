@@ -10,9 +10,10 @@ function Checkbox({paragraphId, isChecked, handleIsChecked}) {
   );
 }
 
-function Paragraph({id, text, updateLineInLines, updateLineInDom}) {
+function Paragraph({id, isChecked, text, updateLineInLines, updateLineInDom}) {
   return (
-    <div id={id} className={styles.pg_block} suppressHydrationWarning
+    <div id={id} className={`${styles.pg_block} ${(isChecked ? styles.checked : "")}`} 
+      suppressHydrationWarning
       contentEditable="true" suppressContentEditableWarning={true} 
       placeholder="Add To-Do" 
       onInput={() => {updateLineInLines()}}
