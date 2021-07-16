@@ -10,7 +10,10 @@ body {
   --placeholder-color: #a7a7a7;
   --checked-to-do-bg-color: #29bdf7;
   --checkbox-hover-color: #ececec;
+  --icon-color: #bebebe;
+  --icon-hover-color: #6d6c6c;
   --white-color: #ffffff;
+  --black-color: #000000;
   --border-color: #7a7a7a;
   --bg-color: #ffffff;
   --transition-speed: 0.3s;
@@ -20,6 +23,8 @@ body {
   --text-color: #d9dee2;
   --checkbox-hover-color: #3f3f3f;
   --placeholder-color: #b9b9b9;
+  --icon-color: #999999;
+  --icon-hover-color: #bebebe;
   --bg-color: #212121;
 }
 
@@ -47,6 +52,27 @@ a {
   display: flex;
   justify-content: flex-end;
   padding: 20px ;
+}
+
+.dmt-nav svg {
+  color: var(--icon-color);
+}
+
+.dmt-nav svg circle {
+  fill: var(--icon-color);
+}
+
+.dmt-nav svg mask circle,
+.dmt-nav svg:hover mask circle {
+  fill: var(--black-color);
+}
+
+.dmt-nav svg:hover {
+  color: var(--icon-hover-color);
+}
+
+.dmt-nav svg:hover circle {
+  fill: var(--icon-hover-color);
 }
 
 .spacer {
