@@ -9,6 +9,7 @@ body {
   --text-color: #323232;
   --placeholder-color: #a7a7a7;
   --checked-to-do-bg-color: #29bdf7;
+  --checkbox-hover-color: #ececec;
   --white-color: #ffffff;
   --border-color: #7a7a7a;
   --bg-color: #ffffff;
@@ -17,6 +18,7 @@ body {
 
 :root.dark-mode {
   --text-color: #d9dee2;
+  --checkbox-hover-color: #3f3f3f;
   --placeholder-color: #b9b9b9;
   --bg-color: #212121;
 }

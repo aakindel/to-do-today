@@ -76,6 +76,11 @@
 }
 
 .checkbox:hover {
+  background-color: var(--checkbox-hover-color);
+}
+
+.checkbox.checked:hover {
+  background-color: var(--checked-to-do-bg-color);
   filter: brightness(95%);
 }
 
