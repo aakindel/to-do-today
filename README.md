@@ -1,1 +1,1 @@
-This project was built using Next.js.
+Today's To-Dos is a to-do list manager that helps users work through their temporary, daily tasks and to-dos.
