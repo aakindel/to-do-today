@@ -52,6 +52,7 @@ a {
   display: flex;
   justify-content: flex-end;
   padding: 20px ;
+  transition: var(--transition-speed);
 }
 
 .dmt-nav svg {
