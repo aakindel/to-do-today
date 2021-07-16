@@ -11,6 +11,8 @@ const DarkModeToggle = () => {
 
   const toggleDarkMode = (checked) => {
     setDarkMode(checked);
+    (checked) ? document.documentElement.classList.add('dark-mode') 
+      : document.documentElement.classList.remove('dark-mode')
   };
 
   return (
