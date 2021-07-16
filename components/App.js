@@ -571,10 +571,13 @@ export default function App() {
 
 
   return (
-    <>
+    <div className={styles.page_container}>
+      <div contentEditable="true" className={styles.page_title} 
+        suppressContentEditableWarning={true}
+        placeholder="Untitled">Today's To-Dos</div>
       <ToDoList lines={lines} 
         updateLineInLines={updateLineInLines} 
         updateLineInDom={updateLineInDom} />
-    </>
+    </div>
   );
 }
