@@ -171,7 +171,7 @@ export default function App() {
 
      const _insertEmptyNewLine = (level, currentLineId, currentLineIndex) => {
       /* inserts empty line before/after current line in Lines array 
-         and inserts new Paragraph above/below current Paragraph in DOM */
+         and inserts new ToDo object above/below current ToDo object in DOM */
 
       // set new line id and text
       const newLineId = uuidv4();
@@ -180,13 +180,13 @@ export default function App() {
       // make level case-insensitive
       level = level.toUpperCase();
 
-      // validate level at which new Paragraph should be inserted
+      // validate level at which new ToDo object should be inserted
       if ((level !== "ABOVE") && (level !== "BELOW")) {
         throw new Error(`_insertEmptyNewLine level should be ` +
         `"ABOVE" or "BELOW", not "${level}"!`);
       }
       
-      // determine level at which new Paragraph should be inserted
+      // determine level at which new ToDo object should be inserted
       const insertNewLineAbove = (level === "ABOVE");
       
       // set new line index before/after current line index in Lines array
@@ -196,15 +196,15 @@ export default function App() {
       // ~ insert new line before/after current line in Lines array
       lines.splice(newLineIndex, 0, makeToDoObject(newLineId, newLineText, false));
 
-      // create container div to contain new Paragraph
+      // create container div to contain new ToDo object
       const div = document.createElement('div');
       div.classList.add(styles.to_do_div);
 
-      // get current Paragraph's container div
+      // get current ToDo object's container div
       const currParaDiv = document.getElementById(currentLineId).parentNode;
       
-      /* ~ insert new Paragraph (container) 
-         above/below current Paragraph (container) in DOM */
+      /* ~ insert new ToDo object (container) 
+         above/below current ToDo object (container) in DOM */
       ReactDom.render(
         <>
         <ToDo key={newLineId} id={newLineId} 
@@ -216,10 +216,10 @@ export default function App() {
             currParaDiv.parentNode.insertBefore(div, currParaDiv.nextSibling)
       );
 
-      // if new Paragraph container is inserted below current Paragraph container
+      // if new ToDo object container is inserted below current ToDo object container
       if (!insertNewLineAbove) {
-        // ~ focus on new Paragraph in DOM
-        div.children[0].focus(); 
+        // ~ focus on new ToDo object in DOM
+        Array.from(div.children).filter(x => x.classList?.contains(styles.pg_block))[0].focus(); 
       }
 
     }
@@ -227,8 +227,8 @@ export default function App() {
     const _splitLineAtCaret = (currentLineId, currentLineIndex) => {
       /* splits current line at caret; sets halves of split text 
          to current line and new line in Lines array respectively; 
-         sets halves of split text to current Paragraph's text 
-         and new Paragraph's text in DOM respectively */
+         sets halves of split text to current ToDo object's paragraph 
+         and new ToDo object's paragraph in DOM respectively */
       
       // set new line id
       const newLineId = uuidv4();
@@ -249,14 +249,14 @@ export default function App() {
          ~ set new line text in Lines array to 2nd half of split text */
       lines.splice(newLineIndex, 0, makeToDoObject(newLineId, newLineText, false));
 
-      // create container div to contain new Paragraph
+      // create container div to contain new ToDo object
       const div = document.createElement('div');
       div.classList.add(styles.to_do_div);
 
-      // get current Paragraph's container div
+      // get current ToDo object's container div
       const currParaDiv = document.getElementById(currentLineId).parentNode;
       
-      /* ~ set current Paragraph's text in DOM to 1st half of split text */
+      /* ~ set current ToDo object's paragraph in DOM to 1st half of split text */
       ReactDom.render(newCurrentLineText, currentLine, () => {
         if (currentLine.innerText !== newCurrentLineText) {
           currentLine.removeChild(currentLine.childNodes[0]); 
@@ -264,9 +264,9 @@ export default function App() {
         }
       });
       
-      /* insert new Paragraph (container) below 
-         current Paragraph (container) in DOM and
-         ~ set new Paragraph's text in DOM to 2nd half of split text */
+      /* insert new ToDo object (container) below 
+         current ToDo object (container) in DOM and
+         ~ set new ToDo object's paragraph in DOM to 2nd half of split text */
       ReactDom.render(
         <ToDo key={newLineId} id={newLineId} 
           text={newLineText} 
@@ -275,8 +275,8 @@ export default function App() {
         currParaDiv.parentNode.insertBefore(div, currParaDiv.nextSibling)
       );
       
-      // ~ focus on new Paragraph in DOM
-      div.children[0].focus();
+      // ~ focus on new ToDo object in DOM
+      Array.from(div.children).filter(x => x.classList?.contains(styles.pg_block))[0].focus();
 
     }
 
@@ -289,21 +289,21 @@ export default function App() {
      *
      * C1. ENTER on an empty line
      *   ~ insert new line after current line in Lines array
-     *   ~ insert new Paragraph below current Paragraph in DOM
-     *   ~ focus on new Paragraph in DOM
+     *   ~ insert new ToDo below current ToDo in DOM
+     *   ~ focus on new ToDo's paragraph in DOM
      * C2. ENTER at beginning of a line with text
      *   ~ insert new line before current line in Lines array
-     *   ~ insert new Paragraph above current Paragraph in DOM
+     *   ~ insert new ToDo above current ToDo in DOM
      * C3. ENTER at end of a line with text
      *   ~ insert new line after current line in Lines array
-     *   ~ insert new Paragraph below current Paragraph in DOM
-     *   ~ focus on new Paragraph in DOM
+     *   ~ insert new ToDo below current ToDo in DOM
+     *   ~ focus on new ToDo's paragraph in DOM
      * C4. ENTER in the middle of a line with text
      *   ~ split current line text at caret
      *   ~ set current line text in Lines array to 1st half of split text
      *   ~ set new line text in Lines array to 2nd half of split text
-     *   ~ set current Paragraph's text in DOM to 1st half of split text
-     *   ~ set new Paragraph's text in DOM to 2nd half of split text
+     *   ~ set current ToDo's paragraph in DOM to 1st half of split text
+     *   ~ set new ToDo's paragraph in DOM to 2nd half of split text
      *   ~ focus on new Paragraph in DOM
      */
 
@@ -356,7 +356,8 @@ export default function App() {
         e.preventDefault();
 
         // get previous line
-        const prevLine = prevParaDiv.childNodes[0];
+        const prevLine = (Array.from(prevParaDiv.childNodes)
+          .filter(x => x.classList?.contains(styles.pg_block))[0]);
         
         if (prevLine !== undefined) {
 
@@ -435,7 +436,8 @@ export default function App() {
       e.preventDefault();
       
       // get previous line, line text (div -> Paragraph -> text) and length
-      const prevLine = prevParaDiv.childNodes[0];
+      const prevLine = (Array.from(prevParaDiv.childNodes)
+          .filter(x => x.classList?.contains(styles.pg_block))[0]);
       
       if (prevLine !== undefined) {
         const prevLineText = prevLine.innerText;
@@ -470,7 +472,8 @@ export default function App() {
       e.preventDefault();
       
       // get next line, line text (div -> Paragraph -> text) and length
-      const nextLine = nextParaDiv.childNodes[0];
+      const nextLine = (Array.from(nextParaDiv.childNodes)
+      .filter(x => x.classList?.contains(styles.pg_block))[0]);
       
       // get next line text node (for setting caret position)
       const nextLineTextNode = (nextLine.childNodes[0] === undefined) ? 
@@ -502,7 +505,8 @@ export default function App() {
     if ((e.key === 'ArrowUp') && (prevParaDiv !== null)) {
       
       // get previous line, line text (div -> Paragraph -> text) and length
-      const prevLine = prevParaDiv.childNodes[0];
+      const prevLine = (Array.from(prevParaDiv.childNodes)
+          .filter(x => x.classList?.contains(styles.pg_block))[0]);
       
       if (prevLine !== undefined) {
         // if prevLine is undefined, default will put caret at line start
@@ -546,7 +550,8 @@ export default function App() {
       e.preventDefault();
      
       // get next line, line text (div -> Paragraph -> text) and length
-      const nextLine = nextParaDiv.childNodes[0];
+      const nextLine = (Array.from(nextParaDiv.childNodes)
+      .filter(x => x.classList?.contains(styles.pg_block))[0]);
      
       // get next line text node (for setting caret position)
       const nextLineTextNode = (nextLine.childNodes[0] === undefined) ? 
