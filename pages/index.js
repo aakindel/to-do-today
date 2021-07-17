@@ -6,13 +6,20 @@ const App = dynamic(() => import('../components/App'), {
   ssr: false
 })
 
-const DarkModeToggle = () => {
-  const [isDarkMode, setDarkMode] = useState(false);
+const DarkModeToggle = ({initialChecked}) => {
+  const [isDarkMode, setDarkMode] = useState(initialChecked);
 
   const toggleDarkMode = (checked) => {
     setDarkMode(checked);
+    
+    // add or remove dark-mode based on whether the toggle is (un)checked
     (checked) ? document.documentElement.classList.add('dark-mode') 
-      : document.documentElement.classList.remove('dark-mode')
+      : document.documentElement.classList.remove('dark-mode');
+    
+    // on the server, do not try to set the theme in localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("theme", (checked) ? "dark" : "light");
+    }
   };
 
   return (
@@ -24,6 +31,17 @@ const DarkModeToggle = () => {
 };
 
 export default function Home() {
+
+  // on the server, do not try to get the theme from localStorage
+  const localTheme = (typeof window !== 'undefined') 
+    ? localStorage.getItem("theme") : null
+  
+  // set the initial theme based on the localStorage theme
+  if (localTheme === "dark") { 
+    document.documentElement.classList.add('dark-mode');
+  } else if (localTheme === "light") {
+     document.documentElement.classList.remove('dark-mode');
+  }
 
   useEffect(() => {
     const dmt = document.getElementById("dmt_nav")
@@ -55,7 +73,7 @@ export default function Home() {
       </Head>
 
       <nav className="container dmt-nav" id="dmt_nav">
-        <DarkModeToggle/>
+        <DarkModeToggle initialChecked={(localTheme === "dark") ? true : false}/>
       </nav>
 
       <div className="spacer"></div>
