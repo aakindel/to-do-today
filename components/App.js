@@ -36,8 +36,8 @@ function makeToDoObject(id, text, isChecked) {
   }
 }
 
-function ToDo({id, text, updateLineInLines, updateLineInDom}) {
-  let [isChecked, setIsChecked] = useState(false);
+function ToDo({id, initIsChecked, text, updateLineInLines, updateLineInDom}) {
+  let [isChecked, setIsChecked] = useState(initIsChecked);
 
   const handleIsChecked = (paragraphId, isChecked) => {
     setIsChecked(isChecked);
@@ -59,7 +59,8 @@ function ToDoList({lines, updateLineInLines, updateLineInDom}) {
   return (
     lines.map((line) => {
       return <div key={line.id} className={styles.to_do_div}><ToDo id={line.id}
-        text={line.text} updateLineInLines={updateLineInLines} 
+        initIsChecked={line.properties.isChecked} text={line.properties.text} 
+        updateLineInLines={updateLineInLines} 
         updateLineInDom={updateLineInDom} /></div>
     })
   );
@@ -67,7 +68,9 @@ function ToDoList({lines, updateLineInLines, updateLineInDom}) {
 
 export default function App() {
   // initialize Lines array with an empty line object
-  const lines = [makeToDoObject(uuidv4(), "", false)];
+  const LS_TO_DO_KEY = "To-Dos"
+  const localToDos = localStorage.getItem(LS_TO_DO_KEY);
+  const lines = (localToDos) ? JSON.parse(localToDos) : [makeToDoObject(uuidv4(), "", false)];
 
   /* initialize prevCaretPosInLine, which 
      keeps track of where the caret has been */
@@ -108,6 +111,8 @@ export default function App() {
       // update current line text in Lines array with currentLineText from DOM
       lines[currentLineIndex].properties.text = currentLineText;
     }
+    
+    localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines))
     console.log('lines: '+ JSON.stringify(lines));
   }
 
@@ -196,6 +201,7 @@ export default function App() {
 
       // ~ insert new line before/after current line in Lines array
       lines.splice(newLineIndex, 0, makeToDoObject(newLineId, newLineText, false));
+      localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
 
       // create container div to contain new ToDo object
       const div = document.createElement('div');
@@ -245,10 +251,12 @@ export default function App() {
 
       // ~ set current line text in Lines array to 1st half of split text
       lines[currentLineIndex].properties.text = newCurrentLineText;
+      localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
       
       /* insert new line after current line in Lines array and 
          ~ set new line text in Lines array to 2nd half of split text */
       lines.splice(newLineIndex, 0, makeToDoObject(newLineId, newLineText, false));
+      localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
 
       // create container div to contain new ToDo object
       const div = document.createElement('div');
@@ -379,6 +387,7 @@ export default function App() {
 
             // ~ remove current line from Lines array
             lines.splice(currentLineIndex, 1);
+            localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
 
             // ~ remove current Paragraph from DOM
             currParaDiv.parentNode.removeChild(currParaDiv);
@@ -392,9 +401,11 @@ export default function App() {
             // ~ append current line text to line before it in Lines array
             const newPrevLineText = prevLineText + currentLineText;
             lines[prevLineIndex].properties.text = newPrevLineText;
+            localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
             
             // ~ remove current line from Lines array
             lines.splice(currentLineIndex, 1);
+            localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
 
             // ~ remove current Paragraph from DOM
             currParaDiv.parentNode.removeChild(currParaDiv);
@@ -570,11 +581,17 @@ export default function App() {
   }
 
 
+  const pageTitle = localStorage.getItem("pageTitle");
+
   return (
     <div className="container">
       <div contentEditable="true" className={styles.page_title} 
         suppressContentEditableWarning={true}
-        placeholder="Untitled">Today&apos;s To-Dos</div>
+        placeholder="Untitled"
+        onInput={(e) => {localStorage.setItem("pageTitle", e.currentTarget.innerText)}}
+      >
+        {(pageTitle) ? pageTitle : (((pageTitle === "")) ? "" : "Today's To-Dos")}
+      </div>
       <ToDoList lines={lines} 
         updateLineInLines={updateLineInLines} 
         updateLineInDom={updateLineInDom} />
