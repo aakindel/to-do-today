@@ -3,21 +3,24 @@ import { useEffect, useState } from 'react';
 import ReactDom from 'react-dom';
 import styles from '../styles/App.module.css'
 
-function Checkbox({paragraphId, isChecked, handleIsChecked}) {
+function Checkbox({toDoId, isChecked, handleIsChecked}) {
   return (
-    <div className={`${styles.checkbox} ${(isChecked ? styles.checked : "")}`} 
-      onClick={() => {handleIsChecked(paragraphId, !isChecked)}} />
+    <div 
+      className={`${styles.checkbox} ${(isChecked ? styles.checked : "")}`} 
+      onClick={() => {handleIsChecked(toDoId, !isChecked)}} />
   );
 }
 
-function Paragraph({id, isChecked, text, updateLineInLines, updateLineInDom}) {
+function Paragraph({isChecked, text, 
+  updateToDoInToDosArray, updateToDoInDom}) {
   return (
-    <div id={id} className={`${styles.pg_block} ${(isChecked ? styles.checked : "")}`} 
+    <div 
+      className={`${styles.pg_block} ${(isChecked ? styles.checked : "")}`} 
       suppressHydrationWarning
       contentEditable="true" suppressContentEditableWarning={true} 
       placeholder="Add To-Do" 
-      onInput={() => {updateLineInLines()}}
-      onKeyDown={(e) => {updateLineInDom(e)}}
+      onInput={() => {updateToDoInToDosArray()}}
+      onKeyDown={(e) => {updateToDoInDom(e)}}
     >
       {text}
     </div>
@@ -28,7 +31,7 @@ function makeToDoObject(id, text, isChecked) {
   return {
     "objectType": "block", 
     "id": id, 
-    "type": "text_line",
+    "type": "to_do",
     "properties": {
       "text": text,
       "isChecked": isChecked
@@ -36,95 +39,114 @@ function makeToDoObject(id, text, isChecked) {
   }
 }
 
-function ToDo({id, initIsChecked, text, updateLineInLines, updateLineInDom}) {
+function ToDo({id, initIsChecked, text, 
+  updateToDoInToDosArray, updateToDoInDom}) {
   let [isChecked, setIsChecked] = useState(initIsChecked);
 
-  const handleIsChecked = (paragraphId, isChecked) => {
+  const handleIsChecked = (toDoId, isChecked) => {
     setIsChecked(isChecked);
-    updateLineInLines(paragraphId, isChecked);
+    updateToDoInToDosArray(toDoId, isChecked);
   }
 
   return (
     <>
-      <Checkbox paragraphId={id} isChecked={isChecked} handleIsChecked={handleIsChecked} />
-      <Paragraph key={id} id={id} isChecked={isChecked}
+      <Checkbox toDoId={id} isChecked={isChecked} 
+        handleIsChecked={handleIsChecked} />
+      <Paragraph key={id} isChecked={isChecked}
         text={text} 
-        updateLineInLines={updateLineInLines} 
-        updateLineInDom={updateLineInDom} />
+        updateToDoInToDosArray={updateToDoInToDosArray} 
+        updateToDoInDom={updateToDoInDom} />
     </>
   );
 }
 
-function ToDoList({lines, updateLineInLines, updateLineInDom}) {
+function ToDoList({toDosArray, updateToDoInToDosArray, updateToDoInDom}) {
   return (
-    lines.map((line) => {
-      return <div key={line.id} className={styles.to_do_div}><ToDo id={line.id}
-        initIsChecked={line.properties.isChecked} text={line.properties.text} 
-        updateLineInLines={updateLineInLines} 
-        updateLineInDom={updateLineInDom} /></div>
+    toDosArray.map((to_do) => {
+      return (
+        <div key={to_do.id} id={to_do.id} className={styles.to_do_div}>
+          <ToDo id={to_do.id}
+            initIsChecked={to_do.properties.isChecked} 
+            text={to_do.properties.text} 
+            updateToDoInToDosArray={updateToDoInToDosArray} 
+            updateToDoInDom={updateToDoInDom} />
+        </div>
+      );
     })
   );
 }
 
 export default function App() {
-  // initialize Lines array with an empty line object
-  const LS_TO_DO_KEY = "To-Dos"
+  // get to-dos from local storage
+  const LS_TO_DO_KEY = "To-Dos";
   const localToDos = localStorage.getItem(LS_TO_DO_KEY);
-  const lines = (localToDos) ? JSON.parse(localToDos) : [makeToDoObject(uuidv4(), "", false)];
+  
+  // initialize toDosArray with an empty to-do object
+  const toDosArray = (localToDos) ? JSON.parse(localToDos) 
+    : [makeToDoObject(uuidv4(), "", false)];
 
-  /* initialize prevCaretPosInLine, which 
+  /* initialize prevCaretPosInText, which 
      keeps track of where the caret has been */
-  let prevCaretPosInLine = 0;
+  let prevCaretPosInText = 0;
 
-  const resetPrevCaretPosInLine = () => {
-    // sets prevCaretPosInLine to proper position in line
-    prevCaretPosInLine = document.getSelection().baseOffset - 1;
+  const resetPrevCaretPosInText = () => {
+    // set prevCaretPosInText to proper position in text
+    prevCaretPosInText = document.getSelection().baseOffset - 1;
   }
 
   useEffect(() => {
-    // set prevCaretPosInLine to caretPositionInLine on click
-    document.body.addEventListener('click', resetPrevCaretPosInLine);
+    // set prevCaretPosInText to caretPositionInText on click
+    document.body.addEventListener('click', resetPrevCaretPosInText);
 
     // clean up the click listener after this effect
-    return () => window.removeEventListener("click", resetPrevCaretPosInLine);
+    return () => {
+      window.removeEventListener("click", resetPrevCaretPosInText);
+    }
 
     // line below fixes useEffect missing dependency warning:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const updateLineInLines = (paragraphId=null, isChecked=null) => {
-    if ((paragraphId !== null) && 
+  const updateToDoInToDosArray = (toDoId=null, isChecked=null) => {
+    if ((toDoId !== null) && 
       ((isChecked === true) || (isChecked === false))) {
-      // if updateLineInLines is invoked from a Checkbox
+      // if updateToDoInToDosArray is invoked from a Checkbox
       
-      // (un)check the paragraph with the passed in paragraphId
-      const lineIndex = lines.findIndex(x => x.id === paragraphId);
-      lines[lineIndex].properties.isChecked = isChecked;
+      // (un)check the to-do with the passed in toDoId
+      const toDoIndex = toDosArray.findIndex(x => x.id === toDoId);
+      toDosArray[toDoIndex].properties.isChecked = isChecked;
 
     } else {
-      // get currentLineText & currentLineIndex
-      const currentLine = document.activeElement;
-      const currentLineText = currentLine.innerText;
-      const currentLineId = currentLine.attributes.getNamedItem("id").value;
-      const currentLineIndex = lines.findIndex(x => x.id === currentLineId);
+      // get current ToDo's Paragraph and text
+      const currToDoPara = document.activeElement;
+      const currToDoText = currToDoPara.innerText;
 
-      // update current line text in Lines array with currentLineText from DOM
-      lines[currentLineIndex].properties.text = currentLineText;
+      // get current ToDo
+      const currToDo = currToDoPara.parentNode;
+
+      // get current ToDo id & current ToDo index (position) in toDosArray
+      const currToDoId = currToDo.attributes.getNamedItem("id").value;
+      const currToDoIndex = toDosArray.findIndex(x => x.id === currToDoId);
+
+      // update current to-do text in toDosArray with currToDoText from DOM
+      toDosArray[currToDoIndex].properties.text = currToDoText;
     }
     
-    localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines))
-    console.log('lines: '+ JSON.stringify(lines));
+    // update toDosArray in localStorage
+    localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(toDosArray));
+    
+    console.log('to-dos: '+ JSON.stringify(toDosArray));
   }
 
-  const _setCaretPositionInLine = (line, position) => {
-    /* sets caret at position in line (TextNode) 
-       or at start/end of line (with other Node types) */
+  const _setCaretPositionInText = (text, position) => {
+    /* sets caret at position in text (TextNode) 
+       or at start/end of other Node types */
     
-    const lineLength = line.length;
+    const textLength = text.length;
     
-    // if line is not a TextNode
-    if ((line.nodeType !== 3)) {
-      console.log(`${line.nodeValue} is not a TextNode!`);
+    // if text is not a TextNode
+    if ((text.nodeType !== 3)) {
+      console.log(`${text.nodeValue} is not a TextNode!`);
       position = 0;
     }
     
@@ -135,11 +157,11 @@ export default function App() {
     // remove all ranges from the selection
     selection.removeAllRanges();
 
-    // set start position of range in line
-    if (position > lineLength) {
-      range.setStart(line, lineLength);
+    // set start position of range in text
+    if (position > textLength) {
+      range.setStart(text, textLength);
     } else {
-      range.setStart(line, position);
+      range.setStart(text, position);
     }
     
     // place caret as a single point at range start
@@ -149,143 +171,161 @@ export default function App() {
     selection.addRange(range);
   }
   
-  const updateLineInDom = (e) => {
+  const updateToDoInDom = (e) => {
 
-    /* GET CARET POSITION & CURRENT LINE ATTRIBUTES
+    /* GET CARET POSITION & CURRENT TO-DO ATTRIBUTES
      ======================================================================= */
 
-    // get current line, line text, and line length
-    const currentLine = document.activeElement;
-    const currentLineText = currentLine.innerText;
-    const currentLineLength = currentLineText.length;
+    // get current ToDo, ToDo text, and text length
+    const currToDoPara = document.activeElement;
+    const currToDoText = currToDoPara.innerText;
+    const currToDoLength = currToDoText.length;
     
-    // get caret position in current line
-    const caretPositionInLine = document.getSelection().baseOffset;
+    // get caret position in current ToDo
+    const caretPositionInText = document.getSelection().baseOffset;
 
-    // get current line id & current line index (position) in lines array
-    const currentLineId = currentLine.attributes.getNamedItem("id").value;
-    const currentLineIndex = lines.findIndex(x => x.id === currentLineId);
+    // get current/previous/next ToDo
+    const currToDo = currToDoPara.parentNode;
+    const prevToDo = currToDo.previousSibling;
+    const nextToDo = currToDo.nextSibling;
 
-    // get current/previous/next Paragraphs' container divs
-    const currParaDiv = document.getElementById(currentLineId).parentNode;
-    const prevParaDiv = currParaDiv.previousSibling;
-    const nextParaDiv = currParaDiv.nextSibling;
+    // get current ToDo id & current ToDo index (position) in toDosArray
+    const currToDoId = currToDo.attributes.getNamedItem("id").value;
+    const currToDoIndex = toDosArray.findIndex(x => x.id === currToDoId);
 
     
     /* HELPER FUNCTIONS for HANDLING ENTER KEYDOWN
      ======================================================================= */
 
-     const _insertEmptyNewLine = (level, currentLineId, currentLineIndex) => {
-      /* inserts empty line before/after current line in Lines array 
+     const _insertEmptyNewToDo = (level, currToDoId, currToDoIndex) => {
+      /* inserts empty to-do before/after current to-do in toDosArray 
          and inserts new ToDo object above/below current ToDo object in DOM */
 
-      // set new line id and text
-      const newLineId = uuidv4();
-      const newLineText = "";
+      // set new to-do id and text
+      const newToDoId = uuidv4();
+      const newToDoText = "";
 
       // make level case-insensitive
       level = level.toUpperCase();
 
       // validate level at which new ToDo object should be inserted
       if ((level !== "ABOVE") && (level !== "BELOW")) {
-        throw new Error(`_insertEmptyNewLine level should be ` +
+        throw new Error(`_insertEmptyNewToDo level should be ` +
         `"ABOVE" or "BELOW", not "${level}"!`);
       }
       
       // determine level at which new ToDo object should be inserted
-      const insertNewLineAbove = (level === "ABOVE");
+      const insertNewToDoAbove = (level === "ABOVE");
       
-      // set new line index before/after current line index in Lines array
-      const newLineIndex = (insertNewLineAbove) ? 
-        currentLineIndex : currentLineIndex + 1;
+      // set new to-do index before/after current to-do index in toDosArray
+      const newToDoIndex = (insertNewToDoAbove) ? 
+        currToDoIndex : currToDoIndex + 1;
 
-      // ~ insert new line before/after current line in Lines array
-      lines.splice(newLineIndex, 0, makeToDoObject(newLineId, newLineText, false));
-      localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
-
-      // create container div to contain new ToDo object
-      const div = document.createElement('div');
-      div.classList.add(styles.to_do_div);
-
-      // get current ToDo object's container div
-      const currParaDiv = document.getElementById(currentLineId).parentNode;
+      // ~ insert new to-do before/after current to-do in toDosArray
+      toDosArray.splice(newToDoIndex, 0, 
+        makeToDoObject(newToDoId, newToDoText, false));
       
-      /* ~ insert new ToDo object (container) 
-         above/below current ToDo object (container) in DOM */
+      // update toDosArray in localStorage
+      localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(toDosArray));
+
+      // create new ToDo div to contain ToDo checkbox & ToDo Paragraph
+      const newToDo = document.createElement('div');
+      newToDo.classList.add(styles.to_do_div);
+      
+      // add id attribute to new ToDo div
+      const newToDoIdAttr = document.createAttribute("id");
+      newToDoIdAttr.value = newToDoId;
+      newToDo.attributes.setNamedItem(newToDoIdAttr);
+
+      // get current ToDo object
+      const currToDo = document.getElementById(currToDoId);
+      
+      /* ~ insert new ToDo object above/below current ToDo object in DOM */
       ReactDom.render(
-        <>
-        <ToDo key={newLineId} id={newLineId} 
-          text={newLineText} 
-          updateLineInLines={updateLineInLines} 
-          updateLineInDom={updateLineInDom} /> </>,
-          (insertNewLineAbove) ? 
-            currParaDiv.parentNode.insertBefore(div, currParaDiv) : 
-            currParaDiv.parentNode.insertBefore(div, currParaDiv.nextSibling)
+        <ToDo key={newToDoId} id={newToDoId} 
+          text={newToDoText} 
+          updateToDoInToDosArray={updateToDoInToDosArray} 
+          updateToDoInDom={updateToDoInDom} />,
+          (insertNewToDoAbove) ? 
+            currToDo.parentNode.insertBefore(newToDo, currToDo) : 
+            currToDo.parentNode.insertBefore(newToDo, currToDo.nextSibling)
       );
 
-      // if new ToDo object container is inserted below current ToDo object container
-      if (!insertNewLineAbove) {
-        // ~ focus on new ToDo object in DOM
-        Array.from(div.children).filter(x => x.classList?.contains(styles.pg_block))[0].focus(); 
+      // if new ToDo object is inserted below current ToDo object
+      if (!insertNewToDoAbove) {
+        // ~ focus on new ToDo Paragraph in DOM
+        Array.from(newToDo.children).filter(
+          x => x.classList?.contains(styles.pg_block))[0].focus(); 
       }
 
     }
 
-    const _splitLineAtCaret = (currentLineId, currentLineIndex) => {
-      /* splits current line at caret; sets halves of split text 
-         to current line and new line in Lines array respectively; 
-         sets halves of split text to current ToDo object's paragraph 
-         and new ToDo object's paragraph in DOM respectively */
+    const _splitToDoAtCaret = (currToDoId, currToDoIndex) => {
+      /* splits current ToDo text at caret; sets halves of split text 
+         to current to-do and to new to-do in toDosArray respectively; 
+         sets halves of split text to current ToDo's text 
+         and to new ToDo's text in DOM respectively */
       
-      // set new line id
-      const newLineId = uuidv4();
+      // set new to-do id
+      const newToDoId = uuidv4();
 
-      // set new line index after current line index in Lines array
-      const newLineIndex = currentLineIndex + 1;
+      // set new to-do index after current to-do index in toDosArray
+      const newToDoIndex = currToDoIndex + 1;
 
-      /* ~ split current line text at caret 
-         (into newCurrentLineText & newLineText) */
-      const newCurrentLineText = currentLineText.substring(0, 
-          caretPositionInLine);
-      const newLineText = currentLineText.substring(caretPositionInLine);
+      /* ~ split current ToDo text at caret 
+         (into newCurrToDoText & newToDoText) */
+      const newCurrToDoText = currToDoText.substring(0, 
+          caretPositionInText);
+      const newToDoText = currToDoText.substring(caretPositionInText);
 
-      // ~ set current line text in Lines array to 1st half of split text
-      lines[currentLineIndex].properties.text = newCurrentLineText;
-      localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
+      // ~ set current to-do text in toDosArray to 1st half of split text
+      toDosArray[currToDoIndex].properties.text = newCurrToDoText;
       
-      /* insert new line after current line in Lines array and 
-         ~ set new line text in Lines array to 2nd half of split text */
-      lines.splice(newLineIndex, 0, makeToDoObject(newLineId, newLineText, false));
-      localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
-
-      // create container div to contain new ToDo object
-      const div = document.createElement('div');
-      div.classList.add(styles.to_do_div);
-
-      // get current ToDo object's container div
-      const currParaDiv = document.getElementById(currentLineId).parentNode;
+      // update toDosArray in localStorage
+      localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(toDosArray));
       
-      /* ~ set current ToDo object's paragraph in DOM to 1st half of split text */
-      ReactDom.render(newCurrentLineText, currentLine, () => {
-        if (currentLine.innerText !== newCurrentLineText) {
-          currentLine.removeChild(currentLine.childNodes[0]); 
-          currentLine.appendChild(document.createTextNode(new String(newCurrentLineText)))
+      /* insert new to-do after current to-do in toDosArray and 
+         ~ set new to-do text in toDosArray to 2nd half of split text */
+      toDosArray.splice(newToDoIndex, 0, 
+        makeToDoObject(newToDoId, newToDoText, false));
+      
+      // update toDosArray in localStorage
+      localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(toDosArray));
+
+      // create new ToDo div to contain ToDo checkbox & ToDo Paragraph
+      const newToDo = document.createElement('div');
+      newToDo.classList.add(styles.to_do_div);
+      
+      // add id attribute to new ToDo div
+      const newToDoIdAttr = document.createAttribute("id");
+      newToDoIdAttr.value = newToDoId;
+      newToDo.attributes.setNamedItem(newToDoIdAttr);
+
+      // get current ToDo object
+      const currToDo = document.getElementById(currToDoId);
+      
+      /* ~ set current ToDo's text in DOM to 1st half of split text */
+      ReactDom.render(newCurrToDoText, currToDoPara, () => {
+        if (currToDoPara.innerText !== newCurrToDoText) {
+          currToDoPara.removeChild(currToDoPara.childNodes[0]); 
+          currToDoPara.appendChild(
+            document.createTextNode(new String(newCurrToDoText)))
         }
       });
       
-      /* insert new ToDo object (container) below 
-         current ToDo object (container) in DOM and
-         ~ set new ToDo object's paragraph in DOM to 2nd half of split text */
+      /* insert new ToDo object below current ToDo object in DOM and
+         ~ set new ToDo's text in DOM to 2nd half of split text */
       ReactDom.render(
-        <ToDo key={newLineId} id={newLineId} 
-          text={newLineText} 
-          updateLineInLines={updateLineInLines} 
-          updateLineInDom={updateLineInDom} />,
-        currParaDiv.parentNode.insertBefore(div, currParaDiv.nextSibling)
+        <ToDo key={newToDoId} id={newToDoId} 
+          text={newToDoText} 
+          updateToDoInToDosArray={updateToDoInToDosArray} 
+          updateToDoInDom={updateToDoInDom} />,
+        currToDo.parentNode.insertBefore(newToDo, currToDo.nextSibling)
       );
       
-      // ~ focus on new ToDo object in DOM
-      Array.from(div.children).filter(x => x.classList?.contains(styles.pg_block))[0].focus();
+      // ~ focus on new ToDo Paragraph in DOM
+      Array.from(newToDo.children).filter(
+        x => x.classList?.contains(styles.pg_block))[0].focus();
 
     }
 
@@ -296,23 +336,23 @@ export default function App() {
     /**
      * Cases to handle when a user presses ENTER
      *
-     * C1. ENTER on an empty line
-     *   ~ insert new line after current line in Lines array
+     * C1. ENTER at empty ToDo
+     *   ~ insert new to-do after current to-do in toDosArray
      *   ~ insert new ToDo below current ToDo in DOM
-     *   ~ focus on new ToDo's paragraph in DOM
-     * C2. ENTER at beginning of a line with text
-     *   ~ insert new line before current line in Lines array
+     *   ~ focus on new ToDo's Paragraph in DOM
+     * C2. ENTER at beginning of a ToDo with text
+     *   ~ insert new to-do before current to-do in toDosArray
      *   ~ insert new ToDo above current ToDo in DOM
-     * C3. ENTER at end of a line with text
-     *   ~ insert new line after current line in Lines array
+     * C3. ENTER at end of a ToDo with text
+     *   ~ insert new to-do after current to-do in toDosArray
      *   ~ insert new ToDo below current ToDo in DOM
-     *   ~ focus on new ToDo's paragraph in DOM
-     * C4. ENTER in the middle of a line with text
-     *   ~ split current line text at caret
-     *   ~ set current line text in Lines array to 1st half of split text
-     *   ~ set new line text in Lines array to 2nd half of split text
-     *   ~ set current ToDo's paragraph in DOM to 1st half of split text
-     *   ~ set new ToDo's paragraph in DOM to 2nd half of split text
+     *   ~ focus on new ToDo's Paragraph in DOM
+     * C4. ENTER in the middle of a ToDo with text
+     *   ~ split current ToDo text at caret
+     *   ~ set current to-do text in toDosArray to 1st half of split text
+     *   ~ set new to-do text in toDosArray to 2nd half of split text
+     *   ~ set current ToDo's text in DOM to 1st half of split text
+     *   ~ set new ToDo's text in DOM to 2nd half of split text
      *   ~ focus on new Paragraph in DOM
      */
 
@@ -320,21 +360,21 @@ export default function App() {
       
       e.preventDefault();
       
-      if ((currentLineLength === 0) || 
-        (caretPositionInLine === currentLineLength)) {  
-        // C1: ENTER on an empty line OR C3: ENTER at end of a line with text
-        _insertEmptyNewLine("BELOW", currentLineId, currentLineIndex);
+      if ((currToDoLength === 0) || 
+        (caretPositionInText === currToDoLength)) {  
+        // C1: ENTER at empty ToDo OR C3: ENTER at end of a ToDo with text
+        _insertEmptyNewToDo("BELOW", currToDoId, currToDoIndex);
 
-      } else if (caretPositionInLine === 0) {  
-        // C2: ENTER at beginning of a line with text
-        _insertEmptyNewLine("ABOVE", currentLineId, currentLineIndex);
+      } else if (caretPositionInText === 0) {  
+        // C2: ENTER at beginning of a ToDo with text
+        _insertEmptyNewToDo("ABOVE", currToDoId, currToDoIndex);
 
       } else { 
-        // C4: ENTER in the middle of a line with text
-        _splitLineAtCaret(currentLineId, currentLineIndex);
+        // C4: ENTER in the middle of a ToDo with text
+        _splitToDoAtCaret(currToDoId, currToDoIndex);
       }
 
-      console.log('lines: ' + JSON.stringify(lines));
+      console.log('to-dos: ' + JSON.stringify(toDosArray));
 
     }
 
@@ -345,86 +385,96 @@ export default function App() {
     /**
      * Cases to handle when a user presses BACKSPACE
      *
-     * C1. BACKSPACE on a non-1st-Paragraph empty line 
-     *   ~ remove current line from Lines array
-     *   ~ remove current Paragraph from DOM
-     *   ~ put caret at end of Paragraph above removed Paragraph in DOM
-     * C2. BACKSPACE at start of a non-1st-Paragraph line with text 
-     *   ~ append current line text to line before it in Lines array
-     *   ~ remove current line from Lines array
-     *   ~ remove current Paragraph from DOM
-     *   ~ append removed Paragraph's text to Paragraph above it in DOM
-     *   ~ put caret at join point in Paragraph above removed Paragraph
+     * C1. BACKSPACE at empty non-1st-ToDo 
+     *   ~ remove current to-do from toDosArray
+     *   ~ remove current ToDo from DOM
+     *   ~ put caret at end of ToDo text above removed ToDo in DOM
+     * C2. BACKSPACE at start of non-empty non-1st-ToDo
+     *   ~ append current to-do text to to-do before it in toDosArray
+     *   ~ remove current to-do from toDosArray
+     *   ~ remove current ToDo from DOM
+     *   ~ append removed ToDo's text to ToDo above it in DOM
+     *   ~ put caret at join point in ToDo text above removed ToDo
      */
 
      if (e.key === 'Backspace') {
 
-      // if current line is not the first line & caret is at line start
-      if ((prevParaDiv !== null) && (caretPositionInLine === 0)) {
+      // if current ToDo is not the first ToDo & caret is at start of ToDo text
+      if ((prevToDo !== null) && (caretPositionInText === 0)) {
 
         e.preventDefault();
 
-        // get previous line
-        const prevLine = (Array.from(prevParaDiv.childNodes)
+        // get previous ToDo Paragraph
+        const prevToDoPara = (Array.from(prevToDo.childNodes)
           .filter(x => x.classList?.contains(styles.pg_block))[0]);
         
-        if (prevLine !== undefined) {
+        if (prevToDoPara !== undefined) {
 
-          // get previous line text (div -> Paragraph -> text) and length
-          const prevLineText = prevLine.innerText;
-          const prevLineLength = prevLineText.length;
+          // get previous ToDo text (div -> Paragraph -> text) and length
+          const prevToDoText = prevToDoPara.innerText;
+          const prevToDoTextLength = prevToDoText.length;
           
-          // get previous line text node (for setting caret position)
-          const prevLineTextNode = (prevLine.childNodes[0] === undefined) ? 
-            prevLine : prevLine.childNodes[0];
+          // get previous ToDo text node (for setting caret position)
+          const prevToDoTextNode = (prevToDoPara.childNodes[0] === undefined) ? 
+            prevToDoPara : prevToDoPara.childNodes[0];
 
-          // get previous line id & previous line index (position) in lines array
-          const prevLineId = prevLine.attributes.getNamedItem("id").value;
-          const prevLineIndex = lines.findIndex(x => x.id === prevLineId);
+          // get previous ToDo id & previous ToDo index in toDosArray
+          const prevToDoId = prevToDo.attributes.getNamedItem("id").value;
+          const prevToDoIndex = toDosArray.findIndex(x => x.id === prevToDoId);
           
-          if (currentLineLength === 0) {
-            // C1: BACKSPACE on a non-1st-Paragraph empty line
+          if (currToDoLength === 0) {
+            // C1: BACKSPACE at empty non-1st-ToDo
 
-            // ~ remove current line from Lines array
-            lines.splice(currentLineIndex, 1);
-            localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
+            // ~ remove current to-do from toDosArray
+            toDosArray.splice(currToDoIndex, 1);
+            
+            // update toDosArray in localStorage
+            localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(toDosArray));
 
-            // ~ remove current Paragraph from DOM
-            currParaDiv.parentNode.removeChild(currParaDiv);
+            // ~ remove current ToDo from DOM
+            currToDo.parentNode.removeChild(currToDo);
 
-            // ~ put caret at end of Paragraph above removed Paragraph in DOM
-            _setCaretPositionInLine(prevLineTextNode, prevLineLength);
+            // ~ put caret at end of ToDo text above removed ToDo in DOM
+            _setCaretPositionInText(prevToDoTextNode, prevToDoTextLength);
 
           } else {
-            // C2: BACKSPACE at start of a non-1st-Paragraph line with text
+            // C2: BACKSPACE at start of non-empty non-1st-ToDo
 
-            // ~ append current line text to line before it in Lines array
-            const newPrevLineText = prevLineText + currentLineText;
-            lines[prevLineIndex].properties.text = newPrevLineText;
-            localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
+            // ~ append current to-do text to to-do before it in toDosArray
+            const newPrevToDoText = prevToDoText + currToDoText;
+            toDosArray[prevToDoIndex].properties.text = newPrevToDoText;
             
-            // ~ remove current line from Lines array
-            lines.splice(currentLineIndex, 1);
-            localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(lines));
+            // update toDosArray in localStorage
+            localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(toDosArray));
+            
+            // ~ remove current to-do from toDosArray
+            toDosArray.splice(currToDoIndex, 1);
+            
+            // update toDosArray in localStorage
+            localStorage.setItem(LS_TO_DO_KEY, JSON.stringify(toDosArray));
 
-            // ~ remove current Paragraph from DOM
-            currParaDiv.parentNode.removeChild(currParaDiv);
+            // ~ remove current ToDo from DOM
+            currToDo.parentNode.removeChild(currToDo);
 
-            // ~ append removed Paragraph's text to Paragraph above it in DOM
-            ReactDom.render(newPrevLineText, prevLine, () => {
-              /* ~ put caret at join point in Paragraph above removed Paragraph 
-                   (since prevLineLength != newPrevLineText length) */
-              // can't use prevLineTextNode to access text node because of re-render
-              if (prevLine.innerText !== newPrevLineText) {
-                prevLine.removeChild(prevLine.childNodes[0]); 
-                prevLine.appendChild(document.createTextNode(new String(newPrevLineText)))
+            // ~ append removed ToDo's text to ToDo above it in DOM
+            ReactDom.render(newPrevToDoText, prevToDoPara, () => {
+              /* ~ put caret at join point in ToDo text above removed ToDo 
+                 (since prevToDoTextLength != newPrevToDoText length) */
+              /* can't access text node with prevToDoTextNode 
+                 because of re-render */
+              if (prevToDoPara.innerText !== newPrevToDoText) {
+                prevToDoPara.removeChild(prevToDoPara.childNodes[0]); 
+                prevToDoPara.appendChild(
+                  document.createTextNode(new String(newPrevToDoText)));
               }
-              _setCaretPositionInLine(document.getElementById(prevLineId).childNodes[0], prevLineLength)
+              _setCaretPositionInText(
+                document.getElementById(prevToDoId).childNodes[0], 
+                prevToDoTextLength);
             });
 
           }
 
-          console.log('lines: ' + JSON.stringify(lines));
+          console.log('to-dos: ' + JSON.stringify(toDosArray));
         }
 
       }
@@ -437,30 +487,31 @@ export default function App() {
     /**
      * Cases to handle when a user presses LEFT ARROW KEY
      *
-     * C1. LEFT ARROW KEY at start of a non-1st-Paragraph line
-     *   ~ put caret at end of Paragraph above current Paragraph in DOM
+     * C1. LEFT ARROW KEY at start of non-1st-ToDo
+     *   ~ put caret at end of ToDo text above current ToDo in DOM
      */
 
-    // if current line is not the first line & caret is at line start 
-    if ((e.key === 'ArrowLeft') && (prevParaDiv !== null) 
-      && (caretPositionInLine === 0)) {
+    // if current ToDo is not the first ToDo & caret is at start of ToDo text 
+    if ((e.key === 'ArrowLeft') && (prevToDo !== null) 
+      && (caretPositionInText === 0)) {
       
       e.preventDefault();
       
-      // get previous line, line text (div -> Paragraph -> text) and length
-      const prevLine = (Array.from(prevParaDiv.childNodes)
+      // get previous ToDo Paragraph
+      const prevToDoPara = (Array.from(prevToDo.childNodes)
           .filter(x => x.classList?.contains(styles.pg_block))[0]);
       
-      if (prevLine !== undefined) {
-        const prevLineText = prevLine.innerText;
-        const prevLineLength = prevLineText.length;
+      if (prevToDoPara !== undefined) {
+        // get previous ToDo text and length
+        const prevToDoText = prevToDoPara.innerText;
+        const prevToDoTextLength = prevToDoText.length;
         
-        // get previous line text node (for setting caret position)
-        const prevLineTextNode = (prevLine.childNodes[0] === undefined) ? 
-          prevLine : prevLine.childNodes[0];
+        // get previous ToDo text node (for setting caret position)
+        const prevToDoTextNode = (prevToDoPara.childNodes[0] === undefined) ? 
+          prevToDoPara : prevToDoPara.childNodes[0];
 
-        // ~ put caret at end of Paragraph above current Paragraph in DOM
-        _setCaretPositionInLine(prevLineTextNode, prevLineLength);
+        // ~ put caret at end of ToDo text above current ToDo in DOM
+        _setCaretPositionInText(prevToDoTextNode, prevToDoTextLength);
 
       }
       
@@ -473,32 +524,32 @@ export default function App() {
     /**
      * Cases to handle when a user presses RIGHT ARROW KEY
      *
-     * C1. RIGHT ARROW KEY at end of a non-last-line line
-     *   ~ put caret at start of Paragraph below current Paragraph in DOM
+     * C1. RIGHT ARROW KEY at end of non-last-ToDo
+     *   ~ put caret at start of ToDo text below current ToDo in DOM
      */
 
-    // if current line is not the first line & caret is at line start 
-    if ((e.key === 'ArrowRight') && (nextParaDiv !== null) 
-      && (caretPositionInLine === currentLineLength)) {
+    // if current ToDo is not the first ToDo & caret is at start of ToDo text 
+    if ((e.key === 'ArrowRight') && (nextToDo !== null) 
+      && (caretPositionInText === currToDoLength)) {
       
       e.preventDefault();
       
-      // get next line, line text (div -> Paragraph -> text) and length
-      const nextLine = (Array.from(nextParaDiv.childNodes)
+      // get next ToDo Paragraph
+      const nextToDoPara = (Array.from(nextToDo.childNodes)
       .filter(x => x.classList?.contains(styles.pg_block))[0]);
       
-      // get next line text node (for setting caret position)
-      const nextLineTextNode = (nextLine.childNodes[0] === undefined) ? 
-        nextLine : nextLine.childNodes[0];
+      // get next ToDo text node (for setting caret position)
+      const nextToDoTextNode = (nextToDoPara.childNodes[0] === undefined) ? 
+        nextToDoPara : nextToDoPara.childNodes[0];
 
-      // ~ put caret at start of Paragraph below current Paragraph in DOM
-      _setCaretPositionInLine(nextLineTextNode, 0);
+      // ~ put caret at start of ToDo text below current ToDo in DOM
+      _setCaretPositionInText(nextToDoTextNode, 0);
 
     }
 
     if ((e.key !== 'ArrowUp') && (e.key !== 'ArrowDown')) {
-      // set prevCaretPosInLine to caretPositionInLine on non-arrow-key press
-      resetPrevCaretPosInLine();
+      // set prevCaretPosInText to caretPositionInText on non-arrow-key press
+      resetPrevCaretPosInText();
     }
 
 
@@ -508,38 +559,38 @@ export default function App() {
     /**
      * Cases to handle when a user presses UP ARROW KEY
      *
-     * C1. UP ARROW KEY on non-1st-Paragraph line
-     *   ~ put caret at proper position in Paragraph above current Paragraph
-     *   ~ retain caretPosition value even if line above has less text
+     * C1. UP ARROW KEY at non-1st-ToDo
+     *   ~ put caret at proper position in ToDo text above current ToDo
+     *   ~ retain caretPosition value even if ToDo text above has less text
      */
 
-    // if current line is not the first line
-    if ((e.key === 'ArrowUp') && (prevParaDiv !== null)) {
+    // if current ToDo is not the first ToDo
+    if ((e.key === 'ArrowUp') && (prevToDo !== null)) {
       
-      // get previous line, line text (div -> Paragraph -> text) and length
-      const prevLine = (Array.from(prevParaDiv.childNodes)
+      // get previous ToDo Paragraph
+      const prevToDoPara = (Array.from(prevToDo.childNodes)
           .filter(x => x.classList?.contains(styles.pg_block))[0]);
       
-      if (prevLine !== undefined) {
-        // if prevLine is undefined, default will put caret at line start
+      if (prevToDoPara !== undefined) {
+        // if prevToDoPara is undefined, default will put caret at text start
         e.preventDefault();
 
-        // get previous line text node (for setting caret position)
-        const prevLineTextNode = (prevLine.childNodes[0] === undefined) ? 
-          prevLine : prevLine.childNodes[0];
+        // get previous ToDo text node (for setting caret position)
+        const prevToDoTextNode = (prevToDoPara.childNodes[0] === undefined) ? 
+          prevToDoPara : prevToDoPara.childNodes[0];
         
-        /* ~ retain caretPosition value even if line above has less text (so
-            if you're on a line with 4 chars, & you press UP to a line with 2
-            chars & UP again to a line with 5 chars, your caret position on 
-            the topmost line will be at 4 chars instead of at 2) */
-        prevCaretPosInLine = (prevCaretPosInLine > caretPositionInLine) ?
-          prevCaretPosInLine : caretPositionInLine;
+        /* ~ retain caretPosition value even if ToDo text above has less text (so
+            if you're at a ToDo with 4 chars, & you press UP to a ToDo with 2
+            chars & UP again to a ToDo with 5 chars, your caret position on 
+            the topmost ToDo will be at 4 chars instead of at 2) */
+        prevCaretPosInText = (prevCaretPosInText > caretPositionInText) ?
+          prevCaretPosInText : caretPositionInText;
 
-        // ~ put caret at proper position in Paragraph above current Paragraph
-        _setCaretPositionInLine(prevLineTextNode, prevCaretPosInLine);
+        // ~ put caret at proper position in ToDo text above current ToDo
+        _setCaretPositionInText(prevToDoTextNode, prevCaretPosInText);
       } else {
-        // set prevCaretPosInLine to line start if prevLine is undefined
-        prevCaretPosInLine = 0;
+        // set prevCaretPosInText to text start if prevToDoPara is undefined
+        prevCaretPosInText = 0;
       }
       
     }
@@ -551,30 +602,30 @@ export default function App() {
     /**
      * Cases to handle when a user presses DOWN ARROW KEY
      *
-     * C1. DOWN ARROW KEY on non-last-line line
-     *   ~ put caret at proper position in Paragraph below current Paragraph
-     *   ~ retain caretPosition value even if line below has less text
+     * C1. DOWN ARROW KEY at non-last-ToDo
+     *   ~ put caret at proper position in ToDo text below current ToDo
+     *   ~ retain caretPosition value even if ToDo text below has less text
      */
 
-    // if current line is not the last line
-    if ((e.key === 'ArrowDown') && (nextParaDiv !== null)) {
+    // if current ToDo is not the last ToDo
+    if ((e.key === 'ArrowDown') && (nextToDo !== null)) {
     
       e.preventDefault();
      
-      // get next line, line text (div -> Paragraph -> text) and length
-      const nextLine = (Array.from(nextParaDiv.childNodes)
+      // get next ToDo, ToDo text (div -> Paragraph -> text) and length
+      const nextToDoPara = (Array.from(nextToDo.childNodes)
       .filter(x => x.classList?.contains(styles.pg_block))[0]);
      
-      // get next line text node (for setting caret position)
-      const nextLineTextNode = (nextLine.childNodes[0] === undefined) ? 
-        nextLine : nextLine.childNodes[0];
+      // get next ToDo text node (for setting caret position)
+      const nextToDoTextNode = (nextToDoPara.childNodes[0] === undefined) ? 
+        nextToDoPara : nextToDoPara.childNodes[0];
       
-      /* ~ retain caretPosition value even if line below has less text */
-      prevCaretPosInLine = (prevCaretPosInLine > caretPositionInLine) ?
-        prevCaretPosInLine : caretPositionInLine;
+      /* ~ retain caretPosition value even if ToDo text below has less text */
+      prevCaretPosInText = (prevCaretPosInText > caretPositionInText) ?
+        prevCaretPosInText : caretPositionInText;
 
-      // ~ put caret at proper position in Paragraph below current Paragraph
-      _setCaretPositionInLine(nextLineTextNode, prevCaretPosInLine);
+      // ~ put caret at proper position in ToDo text below current ToDo
+      _setCaretPositionInText(nextToDoTextNode, prevCaretPosInText);
 
     }
 
@@ -588,13 +639,15 @@ export default function App() {
       <div contentEditable="true" className={styles.page_title} 
         suppressContentEditableWarning={true}
         placeholder="Untitled"
-        onInput={(e) => {localStorage.setItem("pageTitle", e.currentTarget.innerText)}}
+        onInput={(e) => {localStorage.setItem("pageTitle", 
+          e.currentTarget.innerText)}}
       >
-        {(pageTitle) ? pageTitle : (((pageTitle === "")) ? "" : "Today's To-Dos")}
+        {(pageTitle) ? pageTitle 
+          : (((pageTitle === "")) ? "" : "Today's To-Dos")}
       </div>
-      <ToDoList lines={lines} 
-        updateLineInLines={updateLineInLines} 
-        updateLineInDom={updateLineInDom} />
+      <ToDoList toDosArray={toDosArray} 
+        updateToDoInToDosArray={updateToDoInToDosArray} 
+        updateToDoInDom={updateToDoInDom} />
     </div>
   );
 }
